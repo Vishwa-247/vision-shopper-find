@@ -69,13 +69,17 @@ class MLService {
     // Map predictions to product categories
     const productCategory = this.mapToProductCategory(predictionData);
 
+    // Convert to Float32Array and calculate confidence
+    const predictionArray = Array.from(predictionData);
+    const confidence = Math.max(...predictionArray);
+
     tensor.dispose();
     predictions.dispose();
 
     return {
       productCategory,
       dominantColor,
-      confidence: Math.max(...Array.from(predictionData)),
+      confidence,
       features: ['ml-analyzed']
     };
   }
@@ -99,7 +103,7 @@ class MLService {
     return colors[Math.floor(Math.random() * colors.length)];
   }
 
-  private mapToProductCategory(predictions: Float32Array): string {
+  private mapToProductCategory(predictions: Float32Array | Int32Array | Uint8Array): string {
     // Map MobileNet predictions to e-commerce product categories
     // This would contain actual mapping logic based on ImageNet classes
     const categories = ['Sneaker', 'T-Shirt', 'Smartphone', 'Headphones', 'Watch', 'Laptop'];
