@@ -4,9 +4,7 @@ import { Header } from '@/components/Header';
 import { ImageUpload } from '@/components/ImageUpload';
 import { SiteSelector } from '@/components/SiteSelector';
 import { ProductResults } from '@/components/ProductResults';
-import { SearchHistory } from '@/components/SearchHistory';
 import { LoadingState } from '@/components/LoadingState';
-import { EmptyState } from '@/components/EmptyState';
 import { mlService } from '@/services/mlService';
 import { productSearchService } from '@/services/productSearchService';
 import { useToast } from '@/hooks/use-toast';
@@ -27,9 +25,9 @@ const Index = () => {
     setSearchResults(null);
     
     try {
-      console.log('Starting ML analysis...');
+      console.log('Starting real ML analysis...');
       const analysisResult = await mlService.analyzeImage(imageData);
-      console.log('ML Analysis result:', analysisResult);
+      console.log('Real ML Analysis result:', analysisResult);
       
       setDetectedProduct(analysisResult.productCategory);
       setDominantColor(analysisResult.dominantColor);
@@ -63,13 +61,13 @@ const Index = () => {
     setIsSearching(true);
     
     try {
-      console.log('Starting product search...');
+      console.log('Starting real product search...');
       const results = await productSearchService.searchProducts(
         detectedProduct,
         dominantColor,
         selectedSites
       );
-      console.log('Search results:', results);
+      console.log('Real search results:', results);
       
       setSearchResults(results);
       
@@ -89,35 +87,17 @@ const Index = () => {
     }
   };
 
-  const renderMainContent = () => {
-    if (isAnalyzing || isSearching) {
-      return <LoadingState />;
-    }
-
-    if (searchResults && searchResults.length > 0) {
-      return (
-        <ProductResults 
-          results={searchResults}
-          detectedProduct={detectedProduct}
-          dominantColor={dominantColor}
-        />
-      );
-    }
-
-    return <EmptyState />;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
       <Header />
       
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Left Panel - Controls */}
-          <div className="lg:col-span-1 space-y-6">
-            {/* Image Upload */}
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Upload Product Image</h3>
+      <div className="container mx-auto px-6 py-8">
+        <div className="flex gap-8 h-[calc(100vh-120px)]">
+          {/* Left Panel - Large Controls */}
+          <div className="w-96 space-y-6">
+            {/* Image Upload - Large */}
+            <div className="bg-white rounded-2xl shadow-lg p-8">
+              <h3 className="text-xl font-semibold text-gray-800 mb-6">Upload Product Image</h3>
               <ImageUpload 
                 onImageUpload={handleImageUpload}
                 isAnalyzing={isAnalyzing}
@@ -126,10 +106,10 @@ const Index = () => {
               />
             </div>
 
-            {/* Site Selection */}
+            {/* Site Selection - Large */}
             {uploadedImage && !isAnalyzing && detectedProduct && (
-              <div className="bg-white rounded-2xl shadow-lg p-6">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Platforms</h3>
+              <div className="bg-white rounded-2xl shadow-lg p-8">
+                <h3 className="text-xl font-semibold text-gray-800 mb-6">Select Platforms</h3>
                 <SiteSelector
                   selectedSites={selectedSites}
                   onSiteChange={setSelectedSites}
@@ -138,14 +118,31 @@ const Index = () => {
                 />
               </div>
             )}
-
-            {/* Search History */}
-            <SearchHistory />
           </div>
 
           {/* Right Panel - Results */}
-          <div className="lg:col-span-3">
-            {renderMainContent()}
+          <div className="flex-1">
+            {(isAnalyzing || isSearching) && <LoadingState />}
+            
+            {searchResults && searchResults.length > 0 && (
+              <ProductResults 
+                results={searchResults}
+                detectedProduct={detectedProduct}
+                dominantColor={dominantColor}
+              />
+            )}
+            
+            {!isAnalyzing && !isSearching && !searchResults && (
+              <div className="bg-white rounded-2xl shadow-lg p-12 h-full flex items-center justify-center">
+                <div className="text-center max-w-md">
+                  <div className="w-20 h-20 mx-auto bg-gradient-to-r from-purple-600 to-blue-600 rounded-full flex items-center justify-center mb-6">
+                    <span className="text-2xl">🔍</span>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-800 mb-4">Welcome to VisionShopper</h3>
+                  <p className="text-gray-600 text-lg">Upload a product image to start finding the best deals across multiple platforms.</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
