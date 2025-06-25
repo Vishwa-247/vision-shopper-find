@@ -1,111 +1,153 @@
 
 import { useState } from 'react';
-import { Sidebar } from '@/components/Sidebar';
-import { MainContent } from '@/components/MainContent';
+import { Header } from '@/components/Header';
+import { ImageUpload } from '@/components/ImageUpload';
+import { SiteSelector } from '@/components/SiteSelector';
+import { ProductResults } from '@/components/ProductResults';
+import { SearchHistory } from '@/components/SearchHistory';
+import { LoadingState } from '@/components/LoadingState';
+import { EmptyState } from '@/components/EmptyState';
+import { mlService } from '@/services/mlService';
 import { productSearchService } from '@/services/productSearchService';
-import { braveSearchService } from '@/services/braveSearchService';
+import { useToast } from '@/hooks/use-toast';
 
 const Index = () => {
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
-  const [selectedSites, setSelectedSites] = useState<string[]>([]);
-  const [searchResults, setSearchResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [detectedProduct, setDetectedProduct] = useState<string>('');
-  const [dominantColor, setDominantColor] = useState<string>('');
+  const [detectedProduct, setDetectedProduct] = useState('');
+  const [dominantColor, setDominantColor] = useState('');
+  const [selectedSites, setSelectedSites] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const { toast } = useToast();
 
   const handleImageUpload = async (imageData: string) => {
     setUploadedImage(imageData);
     setIsAnalyzing(true);
+    setSearchResults(null);
     
     try {
-      // Simulate initial ML analysis delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      console.log('Starting ML analysis...');
+      const analysisResult = await mlService.analyzeImage(imageData);
+      console.log('ML Analysis result:', analysisResult);
       
-      // In a real implementation, this would call the ML service immediately
-      const products = ['Sneaker', 'T-Shirt', 'Smartphone', 'Headphones', 'Watch', 'Laptop', 'Bag'];
-      const colors = ['Red', 'Blue', 'Black', 'White', 'Gray', 'Green', 'Pink'];
+      setDetectedProduct(analysisResult.productCategory);
+      setDominantColor(analysisResult.dominantColor);
       
-      setDetectedProduct(products[Math.floor(Math.random() * products.length)]);
-      setDominantColor(colors[Math.floor(Math.random() * colors.length)]);
+      toast({
+        title: "Analysis Complete",
+        description: `Detected: ${analysisResult.dominantColor} ${analysisResult.productCategory}`,
+      });
     } catch (error) {
-      console.error('Image analysis failed:', error);
+      console.error('ML analysis failed:', error);
+      toast({
+        title: "Analysis Failed",
+        description: "Please try uploading the image again.",
+        variant: "destructive",
+      });
     } finally {
       setIsAnalyzing(false);
     }
   };
 
   const handleSearch = async () => {
-    if (!selectedSites.length || !uploadedImage) return;
-    
-    setIsAnalyzing(true);
+    if (!detectedProduct || !dominantColor || selectedSites.length === 0) {
+      toast({
+        title: "Missing Information",
+        description: "Please upload an image and select at least one platform.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSearching(true);
     
     try {
-      // Use the integrated product search service
-      const { results, mlAnalysis } = await productSearchService.searchProducts(
-        uploadedImage,
+      console.log('Starting product search...');
+      const results = await productSearchService.searchProducts(
+        detectedProduct,
+        dominantColor,
         selectedSites
       );
+      console.log('Search results:', results);
       
-      // Update state with results
       setSearchResults(results);
-      setDetectedProduct(mlAnalysis.productCategory);
-      setDominantColor(mlAnalysis.dominantColor);
       
-      console.log('Search completed:', { results, mlAnalysis });
+      toast({
+        title: "Search Complete",
+        description: `Found ${results.length} products across ${selectedSites.length} platforms`,
+      });
     } catch (error) {
       console.error('Product search failed:', error);
-      
-      // Fallback to mock data
-      const mockResults = [
-        {
-          id: 1,
-          title: `${dominantColor} ${detectedProduct} - Premium Quality`,
-          price: 89.99,
-          originalPrice: 129.99,
-          site: 'Amazon',
-          image: '/placeholder.svg',
-          url: '#',
-          rating: 4.5
-        },
-        {
-          id: 2,
-          title: `${detectedProduct} ${dominantColor} Edition`,
-          price: 79.99,
-          originalPrice: 99.99,
-          site: 'Flipkart',
-          image: '/placeholder.svg',
-          url: '#',
-          rating: 4.3
-        }
-      ];
-      setSearchResults(mockResults);
+      toast({
+        title: "Search Failed",
+        description: "Please try searching again.",
+        variant: "destructive",
+      });
     } finally {
-      setIsAnalyzing(false);
+      setIsSearching(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex">
-      {/* Sidebar */}
-      <Sidebar
-        uploadedImage={uploadedImage}
-        selectedSites={selectedSites}
-        setSelectedSites={setSelectedSites}
-        isAnalyzing={isAnalyzing}
-        detectedProduct={detectedProduct}
-        dominantColor={dominantColor}
-        onImageUpload={handleImageUpload}
-        onSearch={handleSearch}
-      />
+  const renderMainContent = () => {
+    if (isAnalyzing || isSearching) {
+      return <LoadingState />;
+    }
 
-      {/* Main Content */}
-      <div className="flex-1 p-8">
-        <MainContent
-          searchResults={searchResults}
-          isAnalyzing={isAnalyzing}
+    if (searchResults && searchResults.length > 0) {
+      return (
+        <ProductResults 
+          results={searchResults}
           detectedProduct={detectedProduct}
           dominantColor={dominantColor}
         />
+      );
+    }
+
+    return <EmptyState />;
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-white to-blue-50">
+      <Header />
+      
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          {/* Left Panel - Controls */}
+          <div className="lg:col-span-1 space-y-6">
+            {/* Image Upload */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Upload Product Image</h3>
+              <ImageUpload 
+                onImageUpload={handleImageUpload}
+                isAnalyzing={isAnalyzing}
+                detectedProduct={detectedProduct}
+                dominantColor={dominantColor}
+              />
+            </div>
+
+            {/* Site Selection */}
+            {uploadedImage && !isAnalyzing && detectedProduct && (
+              <div className="bg-white rounded-2xl shadow-lg p-6">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">Select Platforms</h3>
+                <SiteSelector
+                  selectedSites={selectedSites}
+                  onSiteChange={setSelectedSites}
+                  onSearch={handleSearch}
+                  canSearch={selectedSites.length > 0 && !isSearching}
+                />
+              </div>
+            )}
+
+            {/* Search History */}
+            <SearchHistory />
+          </div>
+
+          {/* Right Panel - Results */}
+          <div className="lg:col-span-3">
+            {renderMainContent()}
+          </div>
+        </div>
       </div>
     </div>
   );

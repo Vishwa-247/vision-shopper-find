@@ -6,16 +6,23 @@ import { EmptyState } from '@/components/EmptyState';
 interface MainContentProps {
   searchResults: any;
   isAnalyzing: boolean;
+  isSearching: boolean;
   detectedProduct: string;
   dominantColor: string;
 }
 
-export const MainContent = ({ searchResults, isAnalyzing, detectedProduct, dominantColor }: MainContentProps) => {
-  if (isAnalyzing) {
+export const MainContent = ({ 
+  searchResults, 
+  isAnalyzing, 
+  isSearching, 
+  detectedProduct, 
+  dominantColor 
+}: MainContentProps) => {
+  if (isAnalyzing || isSearching) {
     return <LoadingState />;
   }
 
-  if (searchResults) {
+  if (searchResults && searchResults.length > 0) {
     return (
       <ProductResults 
         results={searchResults}
