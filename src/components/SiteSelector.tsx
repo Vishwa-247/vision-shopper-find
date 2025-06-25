@@ -39,71 +39,63 @@ export const SiteSelector = ({ selectedSites, onSiteChange, onSearch, canSearch 
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto">
-      <div className="bg-white rounded-2xl shadow-lg p-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h3 className="text-2xl font-bold text-gray-800 mb-2">Select E-commerce Sites</h3>
-            <p className="text-gray-600">Choose which platforms to search for the best deals</p>
-          </div>
-          
-          <div className="flex space-x-3">
-            <Button onClick={selectAll} variant="outline" size="sm">
-              Select All
-            </Button>
-            <Button onClick={clearAll} variant="outline" size="sm">
-              Clear All
-            </Button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {ecommerceSites.map((site) => (
-            <div
-              key={site.name}
-              onClick={() => handleSiteToggle(site.name)}
-              className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-300 transform hover:scale-105 ${
-                selectedSites.includes(site.name)
-                  ? 'border-purple-500 bg-purple-50'
-                  : 'border-gray-200 bg-white hover:border-purple-300'
-              }`}
-            >
-              <div className="text-center">
-                <div className={`w-12 h-12 mx-auto rounded-full bg-gradient-to-r ${site.color} flex items-center justify-center text-2xl mb-3`}>
-                  {site.logo}
-                </div>
-                <h4 className="font-semibold text-gray-800">{site.name}</h4>
-              </div>
-              
-              {selectedSites.includes(site.name) && (
-                <div className="absolute top-2 right-2">
-                  <CheckCircle className="w-5 h-5 text-purple-600" />
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center">
-          <div className="mb-4">
-            <span className="text-sm text-gray-500">
-              {selectedSites.length} of {ecommerceSites.length} sites selected
-            </span>
-          </div>
-          
-          <Button
-            onClick={onSearch}
-            disabled={!canSearch}
-            className={`px-8 py-3 rounded-xl font-semibold transition-all duration-300 ${
-              canSearch
-                ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white transform hover:scale-105'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            <Search className="w-5 h-5 mr-2" />
-            Find Best Deals
+    <div className="bg-white rounded-lg shadow-sm border p-4">
+      <div className="flex justify-between items-center mb-4">
+        <div className="space-x-2">
+          <Button onClick={selectAll} variant="outline" size="sm" className="text-xs">
+            All
+          </Button>
+          <Button onClick={clearAll} variant="outline" size="sm" className="text-xs">
+            Clear
           </Button>
         </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3 mb-4">
+        {ecommerceSites.map((site) => (
+          <div
+            key={site.name}
+            onClick={() => handleSiteToggle(site.name)}
+            className={`relative p-3 rounded-lg border cursor-pointer transition-all duration-200 ${
+              selectedSites.includes(site.name)
+                ? 'border-purple-500 bg-purple-50'
+                : 'border-gray-200 bg-white hover:border-purple-300'
+            }`}
+          >
+            <div className="text-center">
+              <div className={`w-8 h-8 mx-auto rounded-full bg-gradient-to-r ${site.color} flex items-center justify-center text-lg mb-2`}>
+                {site.logo}
+              </div>
+              <h4 className="text-xs font-medium text-gray-800">{site.name}</h4>
+            </div>
+            
+            {selectedSites.includes(site.name) && (
+              <div className="absolute top-1 right-1">
+                <CheckCircle className="w-4 h-4 text-purple-600" />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="text-center">
+        <div className="text-xs text-gray-500 mb-3">
+          {selectedSites.length} of {ecommerceSites.length} selected
+        </div>
+        
+        <Button
+          onClick={onSearch}
+          disabled={!canSearch}
+          className={`w-full ${
+            canSearch
+              ? 'bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white'
+              : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+          }`}
+          size="sm"
+        >
+          <Search className="w-4 h-4 mr-2" />
+          Find Deals
+        </Button>
       </div>
     </div>
   );
